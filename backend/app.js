@@ -1,57 +1,41 @@
-import express from 'express';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import { engine } from 'express-handlebars';
-import viewsRouter from './routes/views.router.js';
-import ProductManager from './managers/ProductManager.js';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url'; 
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import handlebars from "express-handlebars";
+import viewsRouter from "./routes/views.router.js";
+import { __dirname } from "./utils.js";
+import path from "path";
+import mongoose from 'mongoose';
+import { connectDB } from './config/db.js';
+connectDB();
 
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+
+
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-const productManager = new ProductManager('./data/products.json');
+// Configuración de Handlebars
+app.engine("handlebars", handlebars.engine());
+app.set("view engine", "handlebars");
+app.set("views", path.join(__dirname, "/views"));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname + '/public'));
+// Rutas
+app.use("/", viewsRouter);
 
-// Handlebars config
-app.engine('handlebars', engine());
-app.set('view engine', 'handlebars');
-app.set('views', __dirname + '/views');
-
-// Router de vistas
-app.use('/', viewsRouter);
-
-// Socket.io
-io.on('connection', async (socket) => {
-  console.log('🔌 Cliente conectado');
-
-  // enviar productos actuales al conectar
-  const productos = await productManager.getProducts();
-  socket.emit('productos', productos);
-
-  // agregar nuevo producto
-  socket.on('nuevoProducto', async (prod) => {
-    await productManager.addProduct(prod);
-    const actualizados = await productManager.getProducts();
-    io.emit('productos', actualizados);
-  });
-
-  // eliminar producto
-  socket.on('eliminarProducto', async (id) => {
-    await productManager.deleteProduct(id);
-    const actualizados = await productManager.getProducts();
-    io.emit('productos', actualizados);
-  });
+// WebSocket
+io.on("connection", (socket) => {
+  console.log("🟢 Cliente conectado con WebSocket");
+  // eventos personalizados acá
 });
 
-// Server
-httpServer.listen(8080, () => {
-  console.log('🚀 Servidor listo en http://localhost:8080');
+// Iniciar servidor
+httpServer.listen(8081, () => {
+  console.log("✅ Servidor corriendo en http://localhost:8081");
 });
+
+mongoose.connect("mongodb+srv://nicolas:nadielavaaadivinar@cluster0.wbgd2cc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+  .then(() => console.log("🟢 Conectado a MongoDB Atlas"))
+  .catch(err => console.error("🔴 Error al conectar:", err));
+
