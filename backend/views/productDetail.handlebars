@@ -1,0 +1,14 @@
+<h1>{{product.title}}</h1>
+<p>{{product.description}}</p>
+<p>Precio: ${{product.price}}</p>
+<button id="add">Agregar</button>
+
+<script>
+  document.getElementById('add').addEventListener('click', async ()=>{
+    const cid = localStorage.getItem('cartId') || (await (await fetch('/api/carts',{method:'POST'})).json()).payload._id;
+    localStorage.setItem('cartId', cid);
+    const resp = await fetch(`/api/carts/${cid}/product/{{product._id}}`, { method: 'POST' });
+    if (resp.ok) alert('Agregado');
+    else alert('Error');
+  });
+</script>

@@ -1,41 +1,39 @@
-import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import handlebars from "express-handlebars";
-import viewsRouter from "./routes/views.router.js";
-import { __dirname } from "./utils.js";
-import path from "path";
+import express from 'express';
 import mongoose from 'mongoose';
-import { connectDB } from './config/db.js';
-connectDB();
+import { createServer } from 'http';
+import { engine } from 'express-handlebars';
+import path from 'path';
+import { __dirname } from './utils.js';
 
 
-
+import productsRouter from './routes/products.router.js';
+import cartsRouter from './routes/carts.router.js';
+import viewsRouter from './routes/views.router.js';
 
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer);
 
-// Configuración de Handlebars
-app.engine("handlebars", handlebars.engine());
-app.set("view engine", "handlebars");
-app.set("views", path.join(__dirname, "/views"));
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, '/public')));
+
+// Handlebars
+app.engine('handlebars', engine());
+app.set('view engine', 'handlebars');
+app.set('views', path.join(__dirname, '/views'));
 
 // Rutas
-app.use("/", viewsRouter);
+app.use('/api/products', productsRouter);
+app.use('/api/carts', cartsRouter);
+app.use('/', viewsRouter);
 
-// WebSocket
-io.on("connection", (socket) => {
-  console.log("🟢 Cliente conectado con WebSocket");
-  // eventos personalizados acá
+// Conexión a Atlas
+const MONGO_URI = 'PON_AQUI_TU_URI_DE_ATLAS';
+await mongoose.connect(MONGO_URI, { dbName: 'ecommerce' });
+console.log('✅ Conectado a MongoDB Atlas');
+
+const PORT = process.env.PORT ?? 8081;
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Servidor en http://localhost:${PORT}`);
 });
-
-// Iniciar servidor
-httpServer.listen(8081, () => {
-  console.log("✅ Servidor corriendo en http://localhost:8081");
-});
-
-mongoose.connect("mongodb+srv://nicolas:nadielavaaadivinar@cluster0.wbgd2cc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-  .then(() => console.log("🟢 Conectado a MongoDB Atlas"))
-  .catch(err => console.error("🔴 Error al conectar:", err));
-
