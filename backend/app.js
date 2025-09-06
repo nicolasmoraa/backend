@@ -1,21 +1,29 @@
 import express from "express";
-import { connectDB } from "./config/db.js"; // 👈 importa la función
+import { createServer } from "http";
+import { Server } from "socket.io";
+import handlebars from "express-handlebars";
+import path from "path";
+import { fileURLToPath } from "url";
+import { connectDB } from "./config/db.js";
+import sessionsRouter from "./routes/sessions.router.js";
 
 const app = express();
-const PORT = 8080;
+const httpServer = createServer(app);
+const io = new Server(httpServer);
 
-// Middlewares
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Conexión a Mongo
-connectDB();
+// rutas
+app.use("/api/sessions", sessionsRouter);
 
-// Rutas de prueba
-app.get("/", (req, res) => {
-  res.send("Servidor funcionando 🚀");
-});
+// mongo
+await connectDB();
 
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+const PORT = process.env.PORT || 8080;
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Servidor en http://localhost:${PORT}`);
 });
