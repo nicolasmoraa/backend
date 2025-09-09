@@ -5,56 +5,80 @@ import User from "../models/User.js";
 
 const router = Router();
 
-// 🔹 Registro
+// 🟢 REGISTRO
 router.post("/register", async (req, res) => {
   try {
     const { first_name, last_name, email, age, password } = req.body;
 
-    // verificar si ya existe
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ error: "El usuario ya existe" });
+    if (!first_name || !last_name || !email || !password) {
+      return res.status(400).json({
+        error: "Faltan campos obligatorios (nombre, apellido, email, password)"
+      });
+    }
 
-    // encriptar
+    // Verificar si el usuario ya existe
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res.status(400).json({ error: "El usuario ya existe" });
+    }
+
+    // Hashear contraseña
     const hashedPassword = bcrypt.hashSync(password, 10);
 
-    const user = await User.create({
+    // Crear usuario
+    const newUser = new User({
       first_name,
       last_name,
       email,
       age,
-      password: hashedPassword
+      password: hashedPassword,
     });
 
-    res.status(201).json({ message: "Usuario registrado", user });
+    await newUser.save();
+
+    res.status(201).json({ message: "Usuario registrado con éxito" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("ERROR en register:", err);
+    res.status(500).json({ error: "Error en el servidor", detail: err.message });
   }
 });
 
-// 🔹 Login
+// 🟢 LOGIN
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email y contraseña son obligatorios" });
+    }
+
+    // Buscar usuario
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: "Usuario no encontrado" });
+    if (!user) return res.status(401).json({ error: "Usuario no encontrado" });
 
-    const valid = bcrypt.compareSync(password, user.password);
-    if (!valid) return res.status(401).json({ error: "Contraseña incorrecta" });
+    // Validar password
+    const isValid = bcrypt.compareSync(password, user.password);
+    if (!isValid) return res.status(401).json({ error: "Contraseña incorrecta" });
 
+    // Crear token JWT
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
     res.json({ message: "Login exitoso", token });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("ERROR en login:", err);
+    res.status(500).json({ error: "Error en el servidor", detail: err.message });
   }
 });
 
-// 🔹 Current (validar token)
+// 🟢 CURRENT (validar token)
 router.get("/current", (req, res) => {
   try {
     const authHeader = req.headers["authorization"];
@@ -65,6 +89,7 @@ router.get("/current", (req, res) => {
 
     res.json({ user: decoded });
   } catch (err) {
+    console.error("ERROR en current:", err);
     res.status(401).json({ error: "Token inválido" });
   }
 });
