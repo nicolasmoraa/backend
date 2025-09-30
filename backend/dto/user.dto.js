@@ -1,5 +1,5 @@
 // dtos/user.dto.js
-export function userToDTO(user) {
+export function toUserDTO(user) {
   if (!user) return null;
   return {
     id: user._id,

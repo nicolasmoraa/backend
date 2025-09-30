@@ -1,39 +1,20 @@
 // repositories/user.repository.js
-import UserDAO from "../daos/user.dao.js";
-import bcrypt from "bcrypt";
+import User from "../models/User.js";
 
-export default class UserRepository {
-  constructor() {
-    this.dao = new UserDAO();
+const UserRepository = {
+  create: async (userData) => {
+    const user = new User(userData);
+    return await user.save();
+  },
+  findByEmail: async (email) => {
+    return await User.findOne({ email });
+  },
+  findById: async (id) => {
+    return await User.findById(id);
+  },
+  updateById: async (id, update) => {
+    return await User.findByIdAndUpdate(id, update, { new: true });
   }
+};
 
-  async register({ first_name, last_name, email, age, password }) {
-    const existing = await this.dao.findByEmail(email);
-    if (existing) throw new Error("USER_EXISTS");
-    const hashed = bcrypt.hashSync(password, 10);
-    const user = await this.dao.create({ first_name, last_name, email, age, password: hashed });
-    return user;
-  }
-
-  async validatePassword(email, password) {
-    const user = await this.dao.findByEmail(email);
-    if (!user) return null;
-    const ok = bcrypt.compareSync(password, user.password);
-    return ok ? user : null;
-  }
-
-  async setReset(id, token, expiresAt) {
-    return this.dao.setResetToken(id, token, expiresAt);
-  }
-
-  async findByEmail(email) { return this.dao.findByEmail(email); }
-  async findById(id) { return this.dao.findById(id); }
-  async updatePassword(id, newPassword) {
-    const hashed = bcrypt.hashSync(newPassword, 10);
-    return this.dao.updateById(id, { password: hashed });
-  }
-
-  async clearReset(id) {
-    return this.dao.clearResetToken(id);
-  }
-}
+export default UserRepository;
