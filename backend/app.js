@@ -9,6 +9,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
 import sessionsRouter from "./routes/sessions.router.js";
+import mocksRouter from "./routes/mocks.router.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -21,6 +22,7 @@ const __dirname = path.dirname(__filename);
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/mocks", mocksRouter);
 
 // Routes
 app.use("/api/sessions", sessionsRouter);
