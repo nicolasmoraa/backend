@@ -10,6 +10,12 @@ import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
 import sessionsRouter from "./routes/sessions.router.js";
 import mocksRouter from "./routes/mocks.router.js";
+import { swaggerSpecs, swaggerUi } from "./config/swagger.js";
+import usersRouter from "./routes/users.router.js";
+
+app.use("/api/users", usersRouter)
+
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 const app = express();
 const httpServer = createServer(app);
