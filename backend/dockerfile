@@ -1,27 +1,10 @@
-# Stage 1: build (instala dependencias)
 FROM node:18-alpine AS deps
 WORKDIR /app
-# Copiamos solo package.json y package-lock para usar cache de Docker
 COPY package.json package-lock.json* ./
 RUN npm ci --only=production
-
-# Stage 2: final image
 FROM node:18-alpine
 WORKDIR /app
-
-# Copiamos solo lo necesario desde stage deps (dependencias)
 COPY --from=deps /app/node_modules ./node_modules
-
-# Copiamos el resto del proyecto
 COPY . .
-
-# Si usás .env localmente, NO lo copies acá al construir la imagen (mejor pasar variables al run)
-# Exponer el puerto que usa la app (ej: 8080)
 EXPOSE 8080
-
-# Comando para arrancar la app
 CMD ["node", "app.js"]
-
-# Opcional: Healthcheck (chequea que el servidor responda)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -q --spider http://localhost:8080/ || exit 1
