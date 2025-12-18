@@ -108,3 +108,5 @@ user → puede manejar su carrito y realizar compras.
 La carpeta node_modules no está incluida en el repositorio.
 
 El proyecto sigue una arquitectura profesional basada en DAO, Repository, DTO y Middlewares.
+
+imagen docker: https://hub.docker.com/repository/docker/nicoyonico/backend-react/general
