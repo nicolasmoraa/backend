@@ -1,42 +1,21 @@
-// app.js
-import dotenv from "dotenv";
-dotenv.config();
-
 import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import path from "path";
-import { fileURLToPath } from "url";
-import { connectDB } from "./config/db.js";
-import sessionsRouter from "../routes/sessions.router.js";
-import mocksRouter from "../routes/mocks.router.js";
-import { swaggerSpecs, swaggerUi } from "./config/swagger.js";
-import usersRouter from "./routes/users.router.js";
-
-app.use("/api/users", usersRouter)
-
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+import sessionsRouter from "./routes/sessions.router.js";
+import usersRouter from "./routes/users.routes.js";
 
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer);
+const PORT = 8080;
 
-// Paths
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/api/mocks", mocksRouter);
 
 // Routes
 app.use("/api/sessions", sessionsRouter);
+app.use("/api/users", usersRouter);
 
-// Connect to DB and start server
-await connectDB();
+app.get("/", (req, res) => {
+  res.send("Servidor funcionando OK");
+});
 
-const PORT = process.env.PORT || 8080;
-httpServer.listen(PORT, () => {
-  console.log(`✅ Servidor escuchando en http://localhost:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Servidor escuchando en puerto ${PORT}`);
 });
